@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import GreenPoint, UserProfile, Stats, Badge
+#from django.contrib.auth.models import User
+from .models import GreenPoint, UserProfile, Stats, Badge, User
 
 class GreenPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -9,13 +10,22 @@ class GreenPointSerializer(serializers.ModelSerializer):
         model = GreenPoint
         fields = ('id', 'latitud','longitud','image', 'date', 'canopy', 'stem', 'height', 'type', 'location', 'status', 'user')
 
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer to map the Model instance into JSON format."""
+
+    class Meta:
+        """Meta class to map serializer's fields with the model fields."""
+        model = User
+        fields = ('id','username','email','password')
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
         model = UserProfile
-        fields = ('fullname','username','email', 'game_points', 'country', 'city')
+        fields = ('fk_user','fullname','game_points', 'profile_pic','country', 'city')
 
 class BadgeSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
