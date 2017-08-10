@@ -10,7 +10,6 @@ class GreenPointSerializer(serializers.ModelSerializer):
         model = GreenPoint
         fields = ('id', 'latitud','longitud','image', 'date', 'canopy', 'stem', 'height', 'type', 'location', 'status', 'user')
 
-
 class UserSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -22,10 +21,20 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
+    fk_user = UserSerializer()
+
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
         model = UserProfile
         fields = ('fk_user','fullname','game_points', 'profile_pic','country', 'city')
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('fk_user')
+        fk_user = User(username=user_data['username'],email=user_data['email'])
+        fk_user.set_password(user_data['password'])
+        fk_user.save()
+        profile = UserProfile.objects.create(fk_user=fk_user, **validated_data)
+        return profile
 
 class BadgeSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
