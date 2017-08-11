@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
 
 # Create your models here.
 
@@ -9,7 +10,7 @@ class UserProfile(models.Model):
     #email = models.EmailField(primary_key=True)
     fk_user = models.OneToOneField(User, primary_key=True)
     fullname = models.CharField(max_length=60, blank=False)
-    profile_pic = models.ImageField(upload_to='images/', blank=True)
+    profile_pic = models.ImageField(upload_to='images/', blank=True, default=None, null=True)
     activation_key = models.CharField(max_length=40, blank=True)
     photo_loaded = models.BooleanField(default=False)
     country = models.CharField(max_length=120)
@@ -21,8 +22,8 @@ class UserProfile(models.Model):
 
 class GreenPoint(models.Model):
 
-    latitud = models.FloatField()
-    longitud = models.FloatField()
+    latitude = models.FloatField()
+    longitude = models.FloatField()
     image = models.URLField(blank=True)
     date = models.DateField(auto_now_add=True)
     canopy = models.IntegerField(blank=True, default=0)
@@ -32,14 +33,23 @@ class GreenPoint(models.Model):
     location = models.CharField(max_length=255, blank=False)
     status = models.IntegerField(blank=False)
     user = models.ForeignKey(UserProfile, blank=True,default=None, null=True)
-    #user = models.EmailField(blank=False)
+
+    def get_username(self):
+        return self.user.fk_user.username
+
+    username = property(get_username)
+
+    def get_profile(self):
+        return self.user.profile_pic
+
+    #profile = property(get_profile)
 
     class Meta:
-        unique_together = (('latitud', 'longitud'),)
+        unique_together = (('latitude', 'longitude'),)
 
     def __str__(self):
         """Return a human readable representation of the model instance."""
-        return str(self.latitud)+','+str(self.longitud)
+        return str(self.latitude)+','+str(self.longitude)
 
 
 class Stats(models.Model):

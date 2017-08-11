@@ -1,9 +1,11 @@
 from django.shortcuts import render
 # Create your views here.
-from rest_framework import generics, status
+from rest_framework.authtoken.models import Token
+from rest_framework import generics, status, renderers
 from rest_framework.decorators import api_view
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 
-from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer
+from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, AuthCustomTokenSerializer
 from .models import GreenPoint, UserProfile, Stats, Badge, User
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -78,19 +80,28 @@ class DetailsViewStats(generics.RetrieveUpdateDestroyAPIView):
     queryset = Stats.objects.all()
     serializer_class = StatsSerializer
 
-class UserList(APIView):
+class ObtainAuthToken(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (
+        FormParser,
+        MultiPartParser,
+        JSONParser,
+    )
 
-    def get(self, request, format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+    renderer_classes = (renderers.JSONRenderer,)
 
-    def post(self, request, format=None):
-        serializer = UserSerializer(data=request.DATA)
-        if serializer.is_valid():
-            serializer.save()
-            serializer = UserProfileSerializer(data=request.DATA)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        serializer = AuthCustomTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        print(user, user.pk, user.username,user.email)
+        token, created = Token.objects.get_or_create(user=user)
+
+        content = {
+            'id': user.pk,
+            'token': token.key,
+            'username': user.username,
+            'email': user.email,
+        }
+        return Response(content)
