@@ -1,7 +1,8 @@
 from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 from .views import CreateViewGreenPoint, DetailsViewGreenPoint, CreateViewBadge, DetailsViewBadge, CreateViewStats,\
-    DetailsViewStats, CreateViewUserProfile, DetailsViewUserProfile, CreateViewUser, DetailsViewUser, ObtainAuthToken
+    DetailsViewStats, CreateViewUserProfile, DetailsViewUserProfile, CreateViewUser, DetailsViewUser, ObtainAuthToken, \
+    GameReportView, RedPointView
 
 urlpatterns = {
     url(r'^greenpoint/$', CreateViewGreenPoint.as_view(), name="createGreenPoint"),
@@ -15,7 +16,8 @@ urlpatterns = {
     url(r'^stats/$', CreateViewStats.as_view(), name="createStats"),
     url(r'^stats/(?P<pk>[0-9]+)/$', DetailsViewStats.as_view(), name="detailsStats"),
     url(r'^api-token-auth/', ObtainAuthToken.as_view(),name="login"),
-
+    url(r'^game/$', GameReportView.as_view(), name="game"),
+    url(r'^redpoint/$', RedPointView.as_view(), name="redpoint"),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)

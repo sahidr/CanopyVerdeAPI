@@ -6,8 +6,6 @@ from rest_framework.authtoken.models import Token
 
 class UserProfile(models.Model):
 
-    #username = models.CharField(blank=True,max_length=60)
-    #email = models.EmailField(primary_key=True)
     fk_user = models.OneToOneField(User, primary_key=True)
     fullname = models.CharField(max_length=60, blank=False)
     profile_pic = models.ImageField(upload_to='images/', blank=True, default=None, null=True)
@@ -71,3 +69,14 @@ class Badge(models.Model):
     def __str__(self):
         """Return a human readable representation of the model instance."""
         return self.badge_name
+
+class GameReport(models.Model):
+    user = models.ForeignKey(UserProfile)
+    cause = models.CharField(max_length=60)
+    point_status = models.IntegerField()
+    point_date = models.DateField(auto_now_add=True)
+    point_value = models.IntegerField()
+
+    def __str__(self):
+        """Return a human readable representation of the model instance."""
+        return str(self.user)+str(self.cause)

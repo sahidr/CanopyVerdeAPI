@@ -3,7 +3,7 @@ from rest_framework import serializers, exceptions
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import get_object_or_404
 
-from .models import GreenPoint, UserProfile, Stats, Badge, User
+from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 
 class GreenPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -12,6 +12,54 @@ class GreenPointSerializer(serializers.ModelSerializer):
         model = GreenPoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
                   'status','user' , 'username')
+
+    def create(self,validated_data):
+
+        green_point = GreenPoint.objects.create(**validated_data)
+        user = validated_data['user']
+        status = validated_data['status']
+
+        if (status==1):
+            cause = "Reporte Hecho"
+            point_value = 2
+            user.game_points += point_value
+            user.save()
+            game_report = GameReport(user=user, cause=cause, point_status=green_point.status,point_value=point_value)
+            game_report.save()
+
+        return green_point
+
+    def update(self, instance, validated_data):
+        instance.latitude = validated_data.get('latitude', instance.latitude)
+        instance.longitude = validated_data.get('longitude', instance.longitude)
+        instance.location = validated_data.get('location', instance.location)
+        instance.type = validated_data.get('type', instance.type)
+        instance.status = validated_data.get('status', instance.status)
+        instance.user = validated_data.get('user', instance.user)
+        instance.save()
+
+        user = validated_data['user']
+        status = validated_data['status']
+
+        if (status == 0):
+            cause = "Solicitud Arbol"
+            point_value = 5
+            user.game_points += point_value
+            user.save()
+            game_report = GameReport(user=user, cause=cause, point_status=status, point_value=point_value)
+            game_report.save()
+
+        return instance
+
+def update_badge(user,points):
+
+    count = user.game_points + points
+
+    badges = Badge.objects.all()
+    for badge in badges:
+        if (badge.min_points <= count) and (count <= badge.max_points):
+            pass
+    return user
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -42,7 +90,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             fk_user.save()
             profile = UserProfile.objects.create(fk_user=fk_user, **validated_data)
             return profile
-
 
 class BadgeSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -106,3 +153,22 @@ def authenticate_user(username=None):
                 return user
         except User.DoesNotExist:
             return None
+
+def user_badge(self,profile,points):
+    badge = profile.badge_name
+    game_points = profile.game_points
+    pass
+
+class GameReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GameReport
+        fields = ('user','cause','point_status','point_date','point_value')
+
+
+class RedPointSerializer(serializers.ModelSerializer):
+    """Serializer to map the Model instance into JSON format."""
+    class Meta:
+        """Meta class to map serializer's fields with the model fields."""
+        model = GreenPoint
+        fields = ('id','type','status','user')
