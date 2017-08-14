@@ -14,6 +14,7 @@ class UserProfile(models.Model):
     country = models.CharField(max_length=120)
     city = models.CharField(max_length=120)
     game_points = models.IntegerField(blank=True,default=0)
+    badge = models.CharField(max_length=100, blank=True, default="Apprentice")
 
     def __str__(self):
         return self.fullname
@@ -65,6 +66,9 @@ class Badge(models.Model):
     badge_name = models.CharField(primary_key=True, max_length=50)
     max_points = models.IntegerField()
     min_points = models.IntegerField()
+
+    class Meta:
+        unique_together = (('max_points', 'min_points'),)
 
     def __str__(self):
         """Return a human readable representation of the model instance."""
