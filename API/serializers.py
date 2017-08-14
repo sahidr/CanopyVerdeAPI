@@ -33,6 +33,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
             profile = UserProfile.objects.create(fk_user=fk_user, **validated_data)
             return profile
 
+    def update(self, instance, validated_data):
+        print("ESTOY ACTUALIZANDO")
+        user_data = validated_data.pop('fk_user')
+
+        user = instance.fk_user
+
+        instance.fullname = validated_data.get('fullname', instance.fullname)
+        instance.country = validated_data.get('country', instance.country)
+        instance.city = validated_data.get('location', instance.city)
+        instance.save()
+
+        #user.email = user_data.get('email', user.email)
+        #user.set_password(user_data.get('password',user.password))
+        #user.save()
+
+        return instance
+
 class GreenPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
     class Meta:
@@ -69,15 +86,21 @@ class GreenPointSerializer(serializers.ModelSerializer):
 
         user = validated_data['user']
         status = validated_data['status']
+        cause = None
+        point_value = 0
 
         if (status == 0):
             cause = "Solicitud Arbol"
             point_value = 5
-            user.game_points += point_value
-            user.save()
-            updated_user = update_badge(user,point_value)
-            game_report = GameReport(user=updated_user, cause=cause, point_status=status, point_value=point_value)
-            game_report.save()
+        elif (status == 2):
+            cause = "Reporte Verificado"
+            point_value = 10
+
+        user.game_points += point_value
+        user.save()
+        updated_user = update_badge(user, point_value)
+        game_report = GameReport(user=updated_user, cause=cause, point_status=status, point_value=point_value)
+        game_report.save()
 
         return instance
 
@@ -103,6 +126,12 @@ class GameReportSerializer(serializers.ModelSerializer):
         model = GameReport
         fields = ('user','cause','point_status','point_date','point_value')
 
+
+class ReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GreenPoint
+        fields = ('status','type','location','date')
 
 class RedPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""

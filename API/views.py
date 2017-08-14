@@ -3,7 +3,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
-    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer
+    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer
+
 from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -92,6 +93,18 @@ class UserGameReportView(generics.ListAPIView):
         """
         user = self.kwargs['user']
         return GameReport.objects.filter(user=user)
+
+class UserReport(generics.ListAPIView):
+
+    serializer_class = ReportSerializer
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the game reports for
+        the user as determined by the user portion of the URL.
+        """
+        user = self.kwargs['user']
+        return GreenPoint.objects.filter(user=user)
 
 class RedPointView(generics.UpdateAPIView):
 
