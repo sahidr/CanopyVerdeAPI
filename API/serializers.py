@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
 from django.contrib.auth import authenticate
 from rest_framework import serializers, exceptions
 from django.core.files.base import ContentFile
 from rest_framework.generics import get_object_or_404
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 import base64
 import six
@@ -52,6 +56,12 @@ class UserSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = User
         fields = ('id','username','email','password')
+        extra_kwargs = {
+            'username': {
+                'validators': [UnicodeUsernameValidator()],
+            }
+        }
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -62,6 +72,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = UserProfile
         fields = ('fk_user','fullname','game_points', 'profile_pic','country', 'city', 'badge')
+        read_only_fields = ('game_points', 'badge')
 
     def create(self, validated_data):
         user_data = validated_data.pop('fk_user')
@@ -76,19 +87,26 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return profile
 
     def update(self, instance, validated_data):
-        print("ESTOY ACTUALIZANDO")
-        user_data = validated_data.pop('fk_user')
+        # A instance of a profile will be updated
 
-        user = instance.fk_user
+        # Update a user
+
+        user_data = validated_data.pop('fk_user')
+        username = self.data['fk_user']['username']
+        user = User.objects.get(username=username)
+        print(user)
+        user_serializer = UserSerializer(data=user_data)
+        print(user_serializer)
+        if user_serializer.is_valid():
+            user_serializer.update(user, user_data)
+
+        # Update fields of UserProfile
 
         instance.fullname = validated_data.get('fullname', instance.fullname)
+        instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
         instance.country = validated_data.get('country', instance.country)
-        instance.city = validated_data.get('location', instance.city)
+        instance.city = validated_data.get('city', instance.city)
         instance.save()
-
-        #user.email = user_data.get('email', user.email)
-        #user.set_password(user_data.get('password',user.password))
-        #user.save()
 
         return instance
 
