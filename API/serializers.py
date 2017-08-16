@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import unicode_literals
 from django.contrib.auth import authenticate
 from rest_framework import serializers, exceptions
@@ -47,8 +46,6 @@ class Base64ImageField(serializers.ImageField):
 
         return extension
 
-
-
 class UserSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -61,7 +58,6 @@ class UserSerializer(serializers.ModelSerializer):
                 'validators': [UnicodeUsernameValidator()],
             }
         }
-
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
@@ -90,7 +86,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # A instance of a profile will be updated
 
         # Update a user
-
         user_data = validated_data.pop('fk_user')
         username = self.data['fk_user']['username']
         user = User.objects.get(username=username)
@@ -101,7 +96,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             user_serializer.update(user, user_data)
 
         # Update fields of UserProfile
-
         instance.fullname = validated_data.get('fullname', instance.fullname)
         instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
         instance.country = validated_data.get('country', instance.country)
@@ -121,7 +115,8 @@ class GreenPointSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = GreenPoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
-                  'status','user' , 'username')
+                  'status','user' , 'username', 'profile_pic')
+
 
     def create(self,validated_data):
 

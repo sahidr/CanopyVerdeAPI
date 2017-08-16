@@ -39,9 +39,9 @@ class GreenPoint(models.Model):
     username = property(get_username)
 
     def get_profile(self):
-        return self.user.profile_pic
+        return "http://127.0.0.1:8000" + str(self.user.profile_pic)
 
-    #profile = property(get_profile)
+    profile_pic = property(get_profile)
 
     class Meta:
         unique_together = (('latitude', 'longitude'),)
