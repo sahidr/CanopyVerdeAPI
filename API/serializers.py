@@ -62,6 +62,10 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
+    profile_pic = Base64ImageField(
+        max_length=None, use_url=True,
+    )
+
     fk_user = UserSerializer()
 
     class Meta:
@@ -123,6 +127,7 @@ class GreenPointSerializer(serializers.ModelSerializer):
         green_point = GreenPoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
+        print(validated_data['image'])
 
         if (status==1):
             cause = "Reporte Hecho"
@@ -178,7 +183,8 @@ class StatsSerializer(serializers.ModelSerializer):
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
         model = Stats
-        fields = ('city','green_index','population_density')
+        fields = ('city','green_index','population_density','reported_trees')
+        read_only = 'reported_trees'
 
 class GameReportSerializer(serializers.ModelSerializer):
 

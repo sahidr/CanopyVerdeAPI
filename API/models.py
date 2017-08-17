@@ -54,8 +54,9 @@ class GreenPoint(models.Model):
 class Stats(models.Model):
 
     city = models.CharField(primary_key=True, max_length=100)
-    green_index = models.IntegerField(default=0)
-    population_density = models.IntegerField(default=0)
+    green_index = models.FloatField(default=0)
+    population_density = models.FloatField(default=0)
+    reported_trees = models.IntegerField(default=0)
 
     def __str__(self):
         """Return a human readable representation of the model instance."""
@@ -64,8 +65,8 @@ class Stats(models.Model):
 class Badge(models.Model):
 
     badge_name = models.CharField(primary_key=True, max_length=50)
-    max_points = models.IntegerField()
-    min_points = models.IntegerField()
+    max_points = models.IntegerField(unique=True)
+    min_points = models.IntegerField(unique=True)
 
     class Meta:
         unique_together = (('max_points', 'min_points'),)
