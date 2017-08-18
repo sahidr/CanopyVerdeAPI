@@ -36,7 +36,6 @@ class DetailsViewUserProfile(generics.RetrieveUpdateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
-
 class CreateViewGreenPoint(generics.ListCreateAPIView):
 
     queryset = GreenPoint.objects.all()

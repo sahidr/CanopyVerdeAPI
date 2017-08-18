@@ -59,6 +59,22 @@ class UserSerializer(serializers.ModelSerializer):
             }
         }
 
+    def update(self, instance, validated_data):
+        email = validated_data['email']
+        user = User.objects.filter(email=email)
+        if user is None:
+            instance.email = validated_data.get('email', instance.email)
+
+        password = validated_data['password']
+
+        if (password.lenght < 8):
+            pass
+        else:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -93,11 +109,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('fk_user')
         username = self.data['fk_user']['username']
         user = User.objects.get(username=username)
-        print(user)
-        user_serializer = UserSerializer(data=user_data)
-        print(user_serializer)
+        user_serializer = UserSerializer(data=user_data, partial=True)
         if user_serializer.is_valid():
             user_serializer.update(user, user_data)
+
 
         # Update fields of UserProfile
         instance.fullname = validated_data.get('fullname', instance.fullname)
@@ -133,6 +148,7 @@ class GreenPointSerializer(serializers.ModelSerializer):
             cause = "Reporte Hecho"
             point_value = 2
             user.game_points += point_value
+            # green_point.profile_pic = user.profile_pic
             user.save()
             updated_user = update_badge(user,point_value)
             game_report = GameReport(user=updated_user, cause=cause, point_status=green_point.status,point_value=point_value)
@@ -263,4 +279,3 @@ def update_badge(user,points):
             user.badge = badge.badge_name
             user.save()
     return user
-
