@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework.authtoken.models import Token
-from rest_framework import generics, renderers
+from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
-    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer
+    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer
 
 from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
@@ -149,3 +149,10 @@ class ObtainAuthToken(APIView):
             'badge': user_profile.badge,
         }
         return Response(content)
+
+class CityStatsView(generics.ListAPIView):
+
+    serializer_class = CityStatsSerializer
+    queryset = Stats.objects.all()
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('city', 'green_index', 'population_density', 'reported_trees')

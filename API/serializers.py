@@ -67,11 +67,8 @@ class UserSerializer(serializers.ModelSerializer):
 
         password = validated_data['password']
 
-        if (password.lenght < 8):
-            pass
-        else:
+        if ( len(password) >= 8):
             instance.set_password(password)
-
         instance.save()
         return instance
 
@@ -134,7 +131,7 @@ class GreenPointSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = GreenPoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
-                  'status','user' , 'username', 'profile_pic')
+                  'status','user' , 'username')
 
 
     def create(self,validated_data):
@@ -279,3 +276,9 @@ def update_badge(user,points):
             user.badge = badge.badge_name
             user.save()
     return user
+
+class CityStatsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Stats
+        fields = ('city','green_index', 'population_density', 'reported_trees')
