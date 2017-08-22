@@ -67,7 +67,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         password = validated_data['password']
 
-        if ( len(password) >= 8):
+        if ( len(str(password)) >= 8):
             instance.set_password(password)
         instance.save()
         return instance
@@ -76,7 +76,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
     profile_pic = Base64ImageField(
-        max_length=None, use_url=True,
+        max_length=None, required=False, use_url=True,
     )
 
     fk_user = UserSerializer()
@@ -139,7 +139,7 @@ class GreenPointSerializer(serializers.ModelSerializer):
         green_point = GreenPoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
-        print(validated_data['image'])
+
 
         if (status==1):
             cause = "Reporte Hecho"
