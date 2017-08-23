@@ -124,7 +124,7 @@ class GreenPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
     image = Base64ImageField(
-        max_length=None, use_url=True,
+        max_length=None, use_url=True, required=False,
     )
 
     class Meta:
@@ -139,7 +139,6 @@ class GreenPointSerializer(serializers.ModelSerializer):
         green_point = GreenPoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
-
 
         if (status==1):
             cause = "Reporte Hecho"
