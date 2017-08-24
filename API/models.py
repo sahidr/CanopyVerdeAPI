@@ -32,17 +32,16 @@ class GreenPoint(models.Model):
     location = models.CharField(max_length=255, blank=False)
     status = models.IntegerField(blank=False)
     user = models.ForeignKey(UserProfile, blank=True,default=None, null=True)
-    #profile_pic = models.ImageField(upload_to='images/profile/', blank=True, default='images/logo.png')
 
     def get_username(self):
         return self.user.fk_user.username
 
     username = property(get_username)
 
-    # def get_profile(self):
-    #     return "http://127.0.0.1:8000" + str(self.user.profile_pic)
-    #
-    # profile_pic = property(get_profile)
+    def get_profile(self):
+        return self.user.profile_pic
+
+    profile_pic = property(get_profile)
 
     class Meta:
         unique_together = (('latitude', 'longitude'),)

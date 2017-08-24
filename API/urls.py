@@ -1,8 +1,9 @@
 from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
-from .views import CreateViewGreenPoint, DetailsViewGreenPoint, CreateViewBadge, DetailsViewBadge, CreateViewStats,\
+from .views import CreateViewGreenPoint, DetailsViewGreenPoint, CreateViewBadge, DetailsViewBadge, CreateViewStats, \
     DetailsViewStats, CreateViewUserProfile, DetailsViewUserProfile, CreateViewUser, DetailsViewUser, ObtainAuthToken, \
-    GameReportView, RedPointView, UserGameReportView, UserReport, CityStatsView
+    GameReportView, RedPointView, UserGameReportView, UserReport, CityStatsView, ResetPasswordView, \
+    Password_Reset_Confirm
 
 urlpatterns = {
     url(r'^greenpoint/$', CreateViewGreenPoint.as_view(), name="createGreenPoint"),
@@ -21,6 +22,8 @@ urlpatterns = {
     url(r'^game/(?P<user>[0-9]+)/$', UserGameReportView.as_view(), name="userGame"),
     url(r'^redpoint/$', RedPointView.as_view(), name="redpoint"),
     url(r'^report/(?P<user>[0-9]+)/$', UserReport.as_view(), name="report"),
+    url(r'^reset/password_reset$',ResetPasswordView.as_view(), name="password_reset"),
+    url(r'^reset/(?P<token>.+)$',Password_Reset_Confirm.as_view(),name='password_reset_confirm'),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)

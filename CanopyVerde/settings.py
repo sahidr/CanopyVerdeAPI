@@ -57,7 +57,7 @@ ROOT_URLCONF = 'CanopyVerde.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
+        'DIRS': [os.path.join(BASE_DIR, 'API/templates')]
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -139,3 +139,10 @@ MEDIA_URL = '/static/media/'
 MEDIA_ROOT = (
             os.path.join(BASE_DIR, "CanopyVerde/static/media/")
 )
+
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'canopyverde.analiticom@gmail.com'
+EMAIL_HOST_PASSWORD = 'analiticom123'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

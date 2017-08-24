@@ -1,14 +1,16 @@
-from django.shortcuts import render
+from django.core.mail import EmailMessage
+from django.template.loader import get_template
+from django.views.generic import TemplateView
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
-    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer
-
+    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer, \
+    ResetPasswordSerializer
 from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.template.loader import get_template
 
 class CreateViewUser(generics.ListCreateAPIView):
 
@@ -156,3 +158,54 @@ class CityStatsView(generics.ListAPIView):
     queryset = Stats.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ('city', 'green_index', 'population_density', 'reported_trees')
+
+class ResetPasswordView(APIView):
+
+    def post(self, request):
+        print (request)
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        user_exist = User.objects.filter(email=email).exists()
+        if user_exist:
+            user = User.objects.get(email=email)
+            token = Token.objects.get(user=user)
+            print(token)
+            content = {
+                'token': token.key,
+                'status': 200
+            }
+
+            email_subject = 'Analiticom - Recuperación de Contraseña'
+            message_template = 'password-reset-email.html'
+            email = [email]
+            context = {'username': str(user),
+                       'key':token,
+                       'host': request.META['HTTP_HOST']}
+            send_email(email_subject, message_template,context ,email)
+
+        else:
+            content = {'status': 404}
+        print(content)
+        return Response(content)
+
+        #{"email": "sreyes@idbcgroup.com"}
+
+
+class Password_Reset_Confirm(TemplateView):
+    template_name = 'password-reset-confirm.html'
+
+    def post(self, request, *args, **kwargs):
+        print("post reset")
+        content = {'status': 200 }
+        return Response(content)
+
+
+def send_email(subject, message_template, context, email):
+
+    from_email = 'canopyverde.analiticom@idbcgroup.com'
+    email_subject = subject
+    message = get_template(message_template).render(context)
+    msg = EmailMessage(email_subject, message, to=email, from_email=from_email)
+    msg.content_subtype = 'html'
+    msg.send()

@@ -56,7 +56,8 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'username': {
                 'validators': [UnicodeUsernameValidator()],
-            }
+            },
+            'password': {'write_only': True}
         }
 
     def update(self, instance, validated_data):
@@ -127,12 +128,15 @@ class GreenPointSerializer(serializers.ModelSerializer):
         max_length=None, use_url=True, required=False,
     )
 
+    profile_pic = Base64ImageField(
+        max_length=None, use_url=True, required=False,
+    )
+
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
         model = GreenPoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
-                  'status','user' , 'username')
-
+                  'status','user' , 'username', 'profile_pic')
 
     def create(self,validated_data):
 
@@ -217,6 +221,17 @@ class RedPointSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = GreenPoint
         fields = ('id','type','status','user')
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        if email:
+            user = User.objects.filter(email=email)
+            print(user)
+
+        return attrs
 
 class AuthCustomTokenSerializer(serializers.Serializer):
     username = serializers.CharField()
