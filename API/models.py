@@ -9,7 +9,7 @@ class UserProfile(models.Model):
     fk_user = models.OneToOneField(User, primary_key=True)
     fullname = models.CharField(max_length=60, blank=False)
     profile_pic = models.ImageField(upload_to='images/profile/', blank=True, default='images/logo.png', null=True)
-    activation_key = models.CharField(max_length=40, blank=True)
+    activation_key = models.CharField(max_length=50, blank=True)
     photo_loaded = models.BooleanField(default=False)
     country = models.CharField(max_length=120)
     city = models.CharField(max_length=120)

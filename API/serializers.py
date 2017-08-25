@@ -222,16 +222,11 @@ class RedPointSerializer(serializers.ModelSerializer):
         model = GreenPoint
         fields = ('id','type','status','user')
 
-class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+class CityStatsSerializer(serializers.ModelSerializer):
 
-    def validate(self, attrs):
-        email = attrs.get('email')
-        if email:
-            user = User.objects.filter(email=email)
-            print(user)
-
-        return attrs
+    class Meta:
+        model = Stats
+        fields = ('city','green_index', 'population_density', 'reported_trees')
 
 class AuthCustomTokenSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -291,8 +286,35 @@ def update_badge(user,points):
             user.save()
     return user
 
-class CityStatsSerializer(serializers.ModelSerializer):
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        if email:
+            user = User.objects.filter(email=email)
+            print(user)
+
+        return attrs
+
+class ChangePasswordSerializer(serializers.ModelSerializer):
+
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, required=True, min_length=8)
 
     class Meta:
-        model = Stats
-        fields = ('city','green_index', 'population_density', 'reported_trees')
+        model = UserProfile
+        fields = ('password','confirm_password','activation_key')
+        extra_kwargs = {
+            'activation_key': {'write_only': True},
+            'password': {'write_only': True},
+            'confirm_password': {'write_only': True}
+        }
+    #
+    # def validate1(self, attrs):
+    #     password = attrs.get('password')
+    #     confirm_password = attrs.get('confirm_password')
+    #
+    #     if password and confirm_password:
+    #         user_exists = User.objects.filter(token=token)

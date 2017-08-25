@@ -1,12 +1,10 @@
 from django.core.mail import EmailMessage
-from django.template.loader import get_template
-from django.views.generic import TemplateView
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
     AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer, \
-    ResetPasswordSerializer
+    ResetPasswordSerializer, ChangePasswordSerializer
 from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -115,6 +113,14 @@ class RedPointView(generics.UpdateAPIView):
     def perform_update(self, serializer):
         serializer.save()
 
+class CityStatsView(generics.ListAPIView):
+
+    serializer_class = CityStatsSerializer
+    queryset = Stats.objects.all()
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('city', 'green_index', 'population_density', 'reported_trees')
+
+
 """ Login Class """
 
 class ObtainAuthToken(APIView):
@@ -135,6 +141,8 @@ class ObtainAuthToken(APIView):
         token, created = Token.objects.get_or_create(user=user)
 
         user_profile = UserProfile.objects.get(fk_user=user.pk)
+        user_profile.activation_key = str(token)
+        user_profile.save()
 
         """
             Content of the Response after successful login
@@ -152,17 +160,9 @@ class ObtainAuthToken(APIView):
         }
         return Response(content)
 
-class CityStatsView(generics.ListAPIView):
-
-    serializer_class = CityStatsSerializer
-    queryset = Stats.objects.all()
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('city', 'green_index', 'population_density', 'reported_trees')
-
 class ResetPasswordView(APIView):
 
     def post(self, request):
-        print (request)
         serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
@@ -170,34 +170,40 @@ class ResetPasswordView(APIView):
         if user_exist:
             user = User.objects.get(email=email)
             token = Token.objects.get(user=user)
-            print(token)
             content = {
                 'token': token.key,
                 'status': 200
             }
-
-            email_subject = 'Analiticom - Recuperación de Contraseña'
+            email_subject = 'CanopyVerde - Recuperación de Contraseña'
             message_template = 'password-reset-email.html'
             email = [email]
-            context = {'username': str(user),
+
+            profile = UserProfile.objects.get(fk_user=user.pk)
+
+            context = {'username': str(profile),
                        'key':token,
                        'host': request.META['HTTP_HOST']}
             send_email(email_subject, message_template,context ,email)
 
         else:
             content = {'status': 404}
-        print(content)
         return Response(content)
 
-        #{"email": "sreyes@idbcgroup.com"}
+class Password_Reset_Confirm(APIView):
 
-
-class Password_Reset_Confirm(TemplateView):
-    template_name = 'password-reset-confirm.html'
-
-    def post(self, request, *args, **kwargs):
-        print("post reset")
-        content = {'status': 200 }
+    def post(self, request, **kwargs):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        password = serializer.validated_data['password']
+        confirm_password = serializer.validated_data['confirm_password']
+        profile = UserProfile.objects.get(activation_key=kwargs['token'])
+        user = profile.fk_user
+        if (password == confirm_password):
+            user.set_password(password)
+            user.save()
+            content = {'status': 200}
+        else:
+            content = {'status': 400}
         return Response(content)
 
 
