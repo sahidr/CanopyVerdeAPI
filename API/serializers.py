@@ -157,6 +157,9 @@ class GreenPointSerializer(serializers.ModelSerializer):
         return green_point
 
     def update(self, instance, validated_data):
+
+        current_status = instance.status
+
         instance.latitude = validated_data.get('latitude', instance.latitude)
         instance.longitude = validated_data.get('longitude', instance.longitude)
         instance.location = validated_data.get('location', instance.location)
@@ -177,11 +180,12 @@ class GreenPointSerializer(serializers.ModelSerializer):
             cause = "Reporte Verificado"
             point_value = 10
 
-        user.game_points += point_value
-        user.save()
-        updated_user = update_badge(user, point_value)
-        game_report = GameReport(user=updated_user, cause=cause, point_status=status, point_value=point_value)
-        game_report.save()
+        if (current_status != 2):
+            user.game_points += point_value
+            user.save()
+            updated_user = update_badge(user, point_value)
+            game_report = GameReport(user=updated_user, cause=cause, point_status=status, point_value=point_value)
+            game_report.save()
 
         return instance
 
