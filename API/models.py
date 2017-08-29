@@ -32,6 +32,7 @@ class GreenPoint(models.Model):
     location = models.CharField(max_length=255, blank=False)
     status = models.IntegerField(blank=False)
     user = models.ForeignKey(UserProfile, blank=True,default=None, null=True)
+    city = models.CharField(max_length=100,default=None, null=True)
 
     def get_username(self):
         return self.user.fk_user.username

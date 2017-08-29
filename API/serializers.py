@@ -136,24 +136,27 @@ class GreenPointSerializer(serializers.ModelSerializer):
         """Meta class to map serializer's fields with the model fields."""
         model = GreenPoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
-                  'status','user' , 'username', 'profile_pic')
+                  'status','user' , 'username', 'profile_pic','city')
 
     def create(self,validated_data):
-
         green_point = GreenPoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
+        city = validated_data['city']
 
         if (status==1):
             cause = "Reporte Hecho"
             point_value = 2
             user.game_points += point_value
-            # green_point.profile_pic = user.profile_pic
             user.save()
             updated_user = update_badge(user,point_value)
             game_report = GameReport(user=updated_user, cause=cause, point_status=green_point.status,point_value=point_value)
             game_report.save()
-
+            city_exists = Stats.objects.filter(city=city).exists()
+            if city_exists:
+                stats = Stats.objects.get(city=city)
+                stats.reported_trees += 1
+                stats.save()
         return green_point
 
     def update(self, instance, validated_data):
@@ -166,16 +169,23 @@ class GreenPointSerializer(serializers.ModelSerializer):
         instance.type = validated_data.get('type', instance.type)
         instance.status = validated_data.get('status', instance.status)
         instance.user = validated_data.get('user', instance.user)
+        instance.city = validated_data.get('city', instance.city)
         instance.save()
 
         user = validated_data['user']
         status = validated_data['status']
+        city = validated_data['city']
         cause = None
         point_value = 0
 
         if (status == 0):
             cause = "Solicitud Arbol"
             point_value = 5
+            city_exists = Stats.objects.filter(city=city).exists()
+            if city_exists:
+                stats = Stats.objects.get(city=city)
+                stats.reported_trees += 1
+                stats.save()
         elif (status == 2):
             cause = "Reporte Verificado"
             point_value = 10
@@ -315,10 +325,3 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
             'confirm_password': {'write_only': True}
         }
-    #
-    # def validate1(self, attrs):
-    #     password = attrs.get('password')
-    #     confirm_password = attrs.get('confirm_password')
-    #
-    #     if password and confirm_password:
-    #         user_exists = User.objects.filter(token=token)

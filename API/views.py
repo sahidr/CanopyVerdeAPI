@@ -31,7 +31,7 @@ class CreateViewUserProfile(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save()
 
-class DetailsViewUserProfile(generics.RetrieveUpdateAPIView):
+class DetailsViewUserProfile(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -44,7 +44,7 @@ class CreateViewGreenPoint(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save()
 
-class DetailsViewGreenPoint(generics.RetrieveUpdateAPIView):
+class DetailsViewGreenPoint(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = GreenPoint.objects.all()
     serializer_class = GreenPointSerializer
@@ -189,7 +189,7 @@ class ResetPasswordView(APIView):
             content = {'status': 404}
         return Response(content)
 
-class Password_Reset_Confirm(APIView):
+class Password_Reset_Confirm(generics.CreateAPIView):
 
     def post(self, request, **kwargs):
         serializer = ChangePasswordSerializer(data=request.data)
@@ -198,7 +198,7 @@ class Password_Reset_Confirm(APIView):
         confirm_password = serializer.validated_data['confirm_password']
         profile = UserProfile.objects.get(activation_key=kwargs['token'])
         user = profile.fk_user
-        if (password == confirm_password):
+        if ((password == confirm_password) and (len(password)>=8 or len(confirm_password)>=8)):
             user.set_password(password)
             user.save()
             content = {'status': 200}
