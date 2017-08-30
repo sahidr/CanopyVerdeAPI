@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 from rest_framework import serializers, exceptions
+from rest_framework.exceptions import APIException
 from django.core.files.base import ContentFile
 from rest_framework.generics import get_object_or_404
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -92,12 +94,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('fk_user')
         email = user_data['email']
         if (User.objects.filter(email=email).exists()):
-            raise exceptions.ValidationError("User already created")
+            content = {'error':400}
+            raise exceptions.ValidationError(content)
         else:
             fk_user = User(username=user_data['username'],email=email)
             fk_user.set_password(user_data['password'])
             fk_user.save()
-            profile = UserProfile.objects.create(fk_user=fk_user, **validated_data)
+            token, created = Token.objects.get_or_create(user=fk_user)
+            profile = UserProfile.objects.create(fk_user=fk_user, activation_key=token, **validated_data)
+            print(profile.activation_key)
             return profile
 
     def update(self, instance, validated_data):
@@ -110,7 +115,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_serializer = UserSerializer(data=user_data, partial=True)
         if user_serializer.is_valid():
             user_serializer.update(user, user_data)
-
 
         # Update fields of UserProfile
         instance.fullname = validated_data.get('fullname', instance.fullname)
@@ -174,18 +178,12 @@ class GreenPointSerializer(serializers.ModelSerializer):
 
         user = validated_data['user']
         status = validated_data['status']
-        city = validated_data['city']
         cause = None
         point_value = 0
 
         if (status == 0):
             cause = "Solicitud Arbol"
             point_value = 5
-            city_exists = Stats.objects.filter(city=city).exists()
-            if city_exists:
-                stats = Stats.objects.get(city=city)
-                stats.reported_trees += 1
-                stats.save()
         elif (status == 2):
             cause = "Reporte Verificado"
             point_value = 10

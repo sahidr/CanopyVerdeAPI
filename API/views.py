@@ -196,6 +196,7 @@ class Password_Reset_Confirm(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
         confirm_password = serializer.validated_data['confirm_password']
+        print(kwargs['token'])
         profile = UserProfile.objects.get(activation_key=kwargs['token'])
         user = profile.fk_user
         if ((password == confirm_password) and (len(password)>=8 or len(confirm_password)>=8)):
