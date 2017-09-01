@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers, exceptions
-from rest_framework.exceptions import APIException
 from django.core.files.base import ContentFile
 from rest_framework.generics import get_object_or_404
 from django.contrib.auth.validators import UnicodeUsernameValidator
@@ -64,15 +63,20 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         email = validated_data['email']
+        password = validated_data['password']
         user = User.objects.filter(email=email)
+        current_email = instance.email
         if user is None:
             instance.email = validated_data.get('email', instance.email)
-
-        password = validated_data['password']
-
-        if ( len(str(password)) >= 8):
-            instance.set_password(password)
-        instance.save()
+            if (len(str(password)) >= 8):
+                instance.set_password(password)
+                instance.save()
+            else:
+                content = {'code': 'password'}
+                raise exceptions.ValidationError(content)
+        else:
+            content = {'code': 'email'}
+            raise exceptions.ValidationError(content)
         return instance
 
 class UserProfileSerializer(serializers.ModelSerializer):
