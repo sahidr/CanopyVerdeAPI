@@ -1,13 +1,13 @@
 from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
-from .views import CreateViewGreenPoint, DetailsViewGreenPoint, CreateViewBadge, DetailsViewBadge, CreateViewStats, \
+from .views import CreateViewTreePoint, DetailsViewTreePoint, CreateViewBadge, DetailsViewBadge, CreateViewStats, \
     DetailsViewStats, CreateViewUserProfile, DetailsViewUserProfile, CreateViewUser, DetailsViewUser, ObtainAuthToken, \
     GameReportView, RedPointView, UserGameReportView, UserReport, CityStatsView, ResetPasswordView, \
     Password_Reset_Confirm
 
 urlpatterns = {
-    url(r'^greenpoint/$', CreateViewGreenPoint.as_view(), name="createGreenPoint"),
-    url(r'^greenpoint/(?P<pk>[0-9]+)/$', DetailsViewGreenPoint.as_view(), name="detailsGreenPoint"),
+    url(r'^treepoint/$', CreateViewTreePoint.as_view(), name="createTreePoint"),
+    url(r'^treepoint/(?P<pk>[0-9]+)/$', DetailsViewTreePoint.as_view(), name="detailsTreePoint"),
     url(r'^badge/$', CreateViewBadge.as_view(), name="createBadge"),
     url(r'^badge/(?P<pk>[a-zA-Z]+)/$', DetailsViewBadge.as_view(), name="detailsBadge"),
     url(r'^user/$', CreateViewUser.as_view(), name="createUser"),

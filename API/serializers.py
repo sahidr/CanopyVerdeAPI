@@ -4,9 +4,8 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers, exceptions
 from django.core.files.base import ContentFile
-from rest_framework.generics import get_object_or_404
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
+from .models import TreePoint, UserProfile, Stats, Badge, User, GameReport
 import base64
 import six
 import uuid
@@ -64,19 +63,23 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         email = validated_data['email']
         password = validated_data['password']
-        user = User.objects.filter(email=email)
+
+        user_exists = User.objects.filter(email=email).exists()
         current_email = instance.email
-        if user is None:
-            instance.email = validated_data.get('email', instance.email)
-            if (len(str(password)) >= 8):
+        if current_email != email:
+            if not user_exists:
+                instance.email = validated_data.get('email', instance.email)
+                instance.save()
+            else:
+                content = {'code': 'email'}
+                raise exceptions.ValidationError(content)
+        if password != 'user_default_password_key':
+            if len(str(password)) >= 8:
                 instance.set_password(password)
                 instance.save()
             else:
                 content = {'code': 'password'}
                 raise exceptions.ValidationError(content)
-        else:
-            content = {'code': 'email'}
-            raise exceptions.ValidationError(content)
         return instance
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -129,7 +132,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
-class GreenPointSerializer(serializers.ModelSerializer):
+class TreePointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
     image = Base64ImageField(
@@ -142,12 +145,12 @@ class GreenPointSerializer(serializers.ModelSerializer):
 
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
-        model = GreenPoint
+        model = TreePoint
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
                   'status','user' , 'username', 'profile_pic','city')
 
     def create(self,validated_data):
-        green_point = GreenPoint.objects.create(**validated_data)
+        green_point = TreePoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
         city = validated_data['city']
@@ -228,14 +231,14 @@ class GameReportSerializer(serializers.ModelSerializer):
 class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = GreenPoint
+        model = TreePoint
         fields = ('status','type','location','date')
 
 class RedPointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
-        model = GreenPoint
+        model = TreePoint
         fields = ('id','type','status','user')
 
 class CityStatsSerializer(serializers.ModelSerializer):
@@ -245,29 +248,20 @@ class CityStatsSerializer(serializers.ModelSerializer):
         fields = ('city','green_index', 'population_density', 'reported_trees')
 
 class AuthCustomTokenSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField()
 
     def validate(self, attrs):
-        username = attrs.get('username')
+        email = attrs.get('email')
         password = attrs.get('password')
 
-        if username and password:
-            # Check if user sent email
-            if authenticate_user(username):
-                user_request = get_object_or_404(
-                    User,
-                    email=username,
-                )
-                username = user_request.username
+        if email and password:
 
-            user = authenticate(username=username, password=password)
-
-            if user:
-                if not user.is_active:
-                    msg = "User account is disabled."
-                    raise exceptions.ValidationError(msg)
-                #login(attrs,user)
+            user_exists = User.objects.filter(email=email).exists()
+            if user_exists:
+                user_email = User.objects.get(email=email)
+                username = user_email.username
+                user = authenticate(username=username, password=password)
             else:
                 msg = "Unable to log in with provided credentials."
                 raise exceptions.ValidationError(msg)
@@ -277,19 +271,6 @@ class AuthCustomTokenSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
-
-def authenticate_user(username=None):
-    try:
-        user = User.objects.get(username=username)
-        if user is not None:
-            return user
-    except User.DoesNotExist:
-        try:
-            user = User.objects.get(email=username)
-            if user is not None:
-                return user
-        except User.DoesNotExist:
-            return None
 
 def update_badge(user,points):
 

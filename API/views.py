@@ -2,10 +2,10 @@ from django.core.mail import EmailMessage
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
-from .serializers import GreenPointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
+from .serializers import TreePointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
     AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer, \
     ResetPasswordSerializer, ChangePasswordSerializer
-from .models import GreenPoint, UserProfile, Stats, Badge, User, GameReport
+from .models import TreePoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.template.loader import get_template
@@ -36,18 +36,18 @@ class DetailsViewUserProfile(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
-class CreateViewGreenPoint(generics.ListCreateAPIView):
+class CreateViewTreePoint(generics.ListCreateAPIView):
 
-    queryset = GreenPoint.objects.all()
-    serializer_class = GreenPointSerializer
+    queryset = TreePoint.objects.all()
+    serializer_class = TreePointSerializer
 
     def perform_create(self, serializer):
         serializer.save()
 
-class DetailsViewGreenPoint(generics.RetrieveUpdateDestroyAPIView):
+class DetailsViewTreePoint(generics.RetrieveUpdateDestroyAPIView):
 
-    queryset = GreenPoint.objects.all()
-    serializer_class = GreenPointSerializer
+    queryset = TreePoint.objects.all()
+    serializer_class = TreePointSerializer
 
 
 class CreateViewBadge(generics.ListCreateAPIView):
@@ -103,11 +103,11 @@ class UserReport(generics.ListAPIView):
         the user as determined by the user portion of the URL.
         """
         user = self.kwargs['user']
-        return GreenPoint.objects.filter(user=user)
+        return TreePoint.objects.filter(user=user)
 
 class RedPointView(generics.UpdateAPIView):
 
-    queryset = GreenPoint.objects.filter(status=-1)
+    queryset = TreePoint.objects.filter(status=-1)
     serializer_class = RedPointSerializer
 
     def perform_update(self, serializer):

@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
-# Create your models here.
-
+# Model of the user's profile
+# Extended table for the Django User table
 class UserProfile(models.Model):
 
     fk_user = models.OneToOneField(User, primary_key=True)
@@ -11,15 +11,15 @@ class UserProfile(models.Model):
     profile_pic = models.ImageField(upload_to='images/profile/', blank=True, default='images/logo.png', null=True)
     activation_key = models.CharField(max_length=50, blank=True)
     photo_loaded = models.BooleanField(default=False)
-    country = models.CharField(max_length=120)
-    city = models.CharField(max_length=120)
+    country = models.CharField(max_length=120, blank=True)
+    city = models.CharField(max_length=120, blank=True)
     game_points = models.IntegerField(blank=True,default=0)
     badge = models.CharField(max_length=100, blank=True, default="Apprentice")
 
     def __str__(self):
         return self.fullname
 
-class GreenPoint(models.Model):
+class TreePoint(models.Model):
 
     latitude = models.FloatField()
     longitude = models.FloatField()
