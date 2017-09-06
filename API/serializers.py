@@ -10,6 +10,11 @@ import base64
 import six
 import uuid
 
+#
+# Class that process an Encode64 Image, this allows the ImageField to receive data instead a FILE
+#
+# Based on https://stackoverflow.com/questions/28036404/django-rest-framework-upload-image-the-submitted-data-was-not-a-file#28036805
+#
 class Base64ImageField(serializers.ImageField):
 
     def to_internal_value(self, data):
