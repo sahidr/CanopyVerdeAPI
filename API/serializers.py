@@ -51,6 +51,10 @@ class Base64ImageField(serializers.ImageField):
 
         return extension
 
+
+#
+# Serializer for the Django User table
+#
 class UserSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -65,6 +69,13 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
+
+    # Method for a custom update of the user table
+    #
+    # @param instance the instance of the user to update
+    #
+    # @param validated_data the params validated received in the request
+    #
     def update(self, instance, validated_data):
         email = validated_data['email']
         password = validated_data['password']
@@ -86,7 +97,9 @@ class UserSerializer(serializers.ModelSerializer):
                 content = {'code': 'password'}
                 raise exceptions.ValidationError(content)
         return instance
-
+#
+# Serializer class for the user's profile
+#
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -94,6 +107,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         max_length=None, required=False, use_url=True,
     )
 
+    # Reference to the User table
     fk_user = UserSerializer()
 
     class Meta:
@@ -102,6 +116,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('fk_user','fullname','game_points', 'profile_pic','country', 'city', 'badge')
         read_only_fields = ('game_points', 'badge')
 
+    # This method overrides the creation of the profile, receiving the the data of the User table
+    # and creating a token for the management of the user
+    #
+    # @param validated_data the params validated received in the request
+    #
     def create(self, validated_data):
         user_data = validated_data.pop('fk_user')
         email = user_data['email']
@@ -117,6 +136,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             print(profile.activation_key)
             return profile
 
+    # Method for a custom update of the user's profile table
+    #
+    # @param instance the instance of the user to update
+    #
+    # @param validated_data the params validated received in the request
+    #
     def update(self, instance, validated_data):
         # A instance of a profile will be updated
 
@@ -137,6 +162,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+#
+# Serializer for the tree reports in the Map
+#
 class TreePointSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -144,6 +172,7 @@ class TreePointSerializer(serializers.ModelSerializer):
         max_length=None, use_url=True, required=False,
     )
 
+    # The user's profile picture
     profile_pic = Base64ImageField(
         max_length=None, use_url=True, required=False,
     )
@@ -154,20 +183,34 @@ class TreePointSerializer(serializers.ModelSerializer):
         fields = ('id', 'latitude','longitude','image', 'date', 'canopy', 'stem', 'height', 'type', 'location',
                   'status','user' , 'username', 'profile_pic','city')
 
+    # This method creates a new tree point in the map
+    # updates the state of the user's game profile and the stats of the city
+    #
+    # @param validated_data the params validated received in the request
+    #
     def create(self,validated_data):
         green_point = TreePoint.objects.create(**validated_data)
         user = validated_data['user']
         status = validated_data['status']
         city = validated_data['city']
 
+        # When the tree is reported by the user, automatically the status is unverified
         if (status==1):
+
+            # Adding points tho the user
             cause = "Reporte Hecho"
             point_value = 2
             user.game_points += point_value
             user.save()
+
+            # Update user badge
             updated_user = update_badge(user,point_value)
+
+            # Add the game report
             game_report = GameReport(user=updated_user, cause=cause, point_status=green_point.status,point_value=point_value)
             game_report.save()
+
+            # Update the quantity if the trees in the city reported
             city_exists = Stats.objects.filter(city=city).exists()
             if city_exists:
                 stats = Stats.objects.get(city=city)
@@ -175,8 +218,15 @@ class TreePointSerializer(serializers.ModelSerializer):
                 stats.save()
         return green_point
 
+    # Method for a custom update of the TreePoint table
+    #
+    # @param instance the instance of the treepoint to update
+    #
+    # @param validated_data the params validated received in the request
+    #
     def update(self, instance, validated_data):
 
+        # The current status of the treepoint
         current_status = instance.status
 
         instance.latitude = validated_data.get('latitude', instance.latitude)
@@ -188,18 +238,24 @@ class TreePointSerializer(serializers.ModelSerializer):
         instance.city = validated_data.get('city', instance.city)
         instance.save()
 
+        # Update the game report
         user = validated_data['user']
         status = validated_data['status']
         cause = None
         point_value = 0
 
+        # In the case of user request of red treepoint (space available to plant a tree)
+        # from unrquested to requested
         if (status == 0):
             cause = "Solicitud Arbol"
             point_value = 5
+
+        # In the case of tree validated (from unverified to verified)
         elif (status == 2):
             cause = "Reporte Verificado"
             point_value = 10
 
+        # if the status is not verified and a admin updates de info
         if (current_status != 2):
             user.game_points += point_value
             user.save()
@@ -209,6 +265,28 @@ class TreePointSerializer(serializers.ModelSerializer):
 
         return instance
 
+# Method that updates the badge of the user in case of a change of game points
+#
+# @param user: the user who will receive a badge update
+#
+# @param points: the points of the event
+#
+def update_badge(user, points):
+
+    # The points accumulated after the event
+    count = user.game_points + points
+
+    badges = Badge.objects.all()
+    for badge in badges:
+        # Check in the database the range of points in a badge and updates the user in
+        # case of a level up
+        if (badge.min_points <= count) and (count <= badge.max_points):
+            user.badge = badge.badge_name
+            user.save()
+    return user
+
+
+# Serializer for the rules of the game
 class BadgeSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -217,6 +295,7 @@ class BadgeSerializer(serializers.ModelSerializer):
         model = Badge
         fields = ('badge_name','max_points','min_points')
 
+# Serializer for the stats
 class StatsSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
 
@@ -226,32 +305,28 @@ class StatsSerializer(serializers.ModelSerializer):
         fields = ('city','green_index','population_density','reported_trees')
         read_only = 'reported_trees'
 
+# Serializer for the game reports
 class GameReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameReport
         fields = ('user','cause','point_status','point_date','point_value')
 
-
+# Serializer for the reported trees of the user
 class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TreePoint
         fields = ('status','type','location','date')
 
-class RedPointSerializer(serializers.ModelSerializer):
-    """Serializer to map the Model instance into JSON format."""
-    class Meta:
-        """Meta class to map serializer's fields with the model fields."""
-        model = TreePoint
-        fields = ('id','type','status','user')
-
+# Serializer for the stats of a particular city
 class CityStatsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stats
         fields = ('city','green_index', 'population_density', 'reported_trees')
 
+# Serializer for the user authentication
 class AuthCustomTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
@@ -277,18 +352,7 @@ class AuthCustomTokenSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
-def update_badge(user,points):
-
-    count = user.game_points + points
-
-    badges = Badge.objects.all()
-    for badge in badges:
-        if (badge.min_points <= count) and (count <= badge.max_points):
-            user.badge = badge.badge_name
-            user.save()
-    return user
-
-
+# Serializer for the reset password
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -300,6 +364,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         return attrs
 
+# Serializer for the change of the password
 class ChangePasswordSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, required=True, min_length=8)

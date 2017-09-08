@@ -3,7 +3,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from .serializers import TreePointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
-    AuthCustomTokenSerializer, GameReportSerializer, RedPointSerializer, ReportSerializer, CityStatsSerializer, \
+    AuthCustomTokenSerializer, GameReportSerializer, ReportSerializer, CityStatsSerializer, \
     ResetPasswordSerializer, ChangePasswordSerializer
 from .models import TreePoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
@@ -81,6 +81,7 @@ class GameReportView(generics.ListAPIView):
     queryset = GameReport.objects.all()
     serializer_class = GameReportSerializer
 
+# Filters the user's game report with the argument of the URL
 class UserGameReportView(generics.ListAPIView):
 
     serializer_class = GameReportSerializer
@@ -93,6 +94,8 @@ class UserGameReportView(generics.ListAPIView):
         user = self.kwargs['user']
         return GameReport.objects.filter(user=user)
 
+
+# Filters the user's game report with the argument of the URL
 class UserReport(generics.ListAPIView):
 
     serializer_class = ReportSerializer
@@ -105,14 +108,7 @@ class UserReport(generics.ListAPIView):
         user = self.kwargs['user']
         return TreePoint.objects.filter(user=user)
 
-class RedPointView(generics.UpdateAPIView):
-
-    queryset = TreePoint.objects.filter(status=-1)
-    serializer_class = RedPointSerializer
-
-    def perform_update(self, serializer):
-        serializer.save()
-
+# Search view that filters the stats of the city requested in the URL
 class CityStatsView(generics.ListAPIView):
 
     serializer_class = CityStatsSerializer
@@ -120,9 +116,7 @@ class CityStatsView(generics.ListAPIView):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('city', 'green_index', 'population_density', 'reported_trees')
 
-
 """ Login Class """
-
 class ObtainAuthToken(APIView):
     throttle_classes = ()
     permission_classes = ()
@@ -140,6 +134,7 @@ class ObtainAuthToken(APIView):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
 
+        # Saves the token of the User
         user_profile = UserProfile.objects.get(fk_user=user.pk)
         user_profile.activation_key = str(token)
         user_profile.save()
@@ -160,8 +155,11 @@ class ObtainAuthToken(APIView):
         }
         return Response(content)
 
+
 class ResetPasswordView(APIView):
 
+    # Check if the email has an account associated and sends an email with the link
+    # to change the password using the Token of the user
     def post(self, request):
         serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -175,11 +173,11 @@ class ResetPasswordView(APIView):
                 'status': 200
             }
             email_subject = 'CanopyVerde - Recuperación de Contraseña'
+            # The email is built with a template
             message_template = 'password-reset-email.html'
             email = [email]
-
             profile = UserProfile.objects.get(fk_user=user.pk)
-
+            #The context of the email
             context = {'username': str(profile),
                        'key':token,
                        'host': request.META['HTTP_HOST']}
@@ -189,14 +187,33 @@ class ResetPasswordView(APIView):
             content = {'status': 404}
         return Response(content)
 
+# Sends an email built with a template using the user's token
+#
+# @param subject the subject of the email
+#
+# @param message_template the template view
+#
+# @param context the params that will be used in the template
+#
+# @param email the user's email
+#
+def send_email(subject, message_template, context, email):
+
+    from_email = 'canopyverde.analiticom@idbcgroup.com'
+    email_subject = subject
+    message = get_template(message_template).render(context)
+    msg = EmailMessage(email_subject, message, to=email, from_email=from_email)
+    msg.content_subtype = 'html'
+    msg.send()
+
 class Password_Reset_Confirm(generics.CreateAPIView):
 
+    # Check if the passwords are the same and updates the user's password
     def post(self, request, **kwargs):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
         confirm_password = serializer.validated_data['confirm_password']
-        print(kwargs['token'])
         profile = UserProfile.objects.get(activation_key=kwargs['token'])
         user = profile.fk_user
         if ((password == confirm_password) and (len(password)>=8 or len(confirm_password)>=8)):
@@ -206,13 +223,3 @@ class Password_Reset_Confirm(generics.CreateAPIView):
         else:
             content = {'status': 400}
         return Response(content)
-
-
-def send_email(subject, message_template, context, email):
-
-    from_email = 'canopyverde.analiticom@idbcgroup.com'
-    email_subject = subject
-    message = get_template(message_template).render(context)
-    msg = EmailMessage(email_subject, message, to=email, from_email=from_email)
-    msg.content_subtype = 'html'
-    msg.send()
