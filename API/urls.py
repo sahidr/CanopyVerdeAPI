@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 from .views import CreateViewTreePoint, DetailsViewTreePoint, CreateViewBadge, DetailsViewBadge, CreateViewStats, \
     DetailsViewStats, CreateViewUserProfile, DetailsViewUserProfile, CreateViewUser, DetailsViewUser, ObtainAuthToken, \
-    GameReportView, UserGameReportView, UserReport, CityStatsView, ResetPasswordView, Password_Reset_Confirm
+    GameReportView, UserGameReportView, UserReport, CityStatsView, ResetPasswordView, Password_Reset_Confirm, HomeView
 
 urlpatterns = {
     url(r'^treepoint/$', CreateViewTreePoint.as_view(), name="createTreePoint"),
@@ -22,6 +22,7 @@ urlpatterns = {
     url(r'^report/(?P<user>[0-9]+)/$', UserReport.as_view(), name="report"),
     url(r'^reset/password_reset$',ResetPasswordView.as_view(), name="password_reset"),
     url(r'^reset/(?P<token>.+)$',Password_Reset_Confirm.as_view(),name='password_reset_confirm'),
+    url(r'^$', HomeView.as_view(), name="index"),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)

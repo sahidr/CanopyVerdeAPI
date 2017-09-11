@@ -329,28 +329,66 @@ class CityStatsSerializer(serializers.ModelSerializer):
 # Serializer for the user authentication
 class AuthCustomTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField()
+    password = serializers.CharField() #password or token
+    is_social = serializers.BooleanField()
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
+        is_social = attrs.get('is_social')
 
-        if email and password:
-
-            user_exists = User.objects.filter(email=email).exists()
-            if user_exists:
-                user_email = User.objects.get(email=email)
-                username = user_email.username
-                user = authenticate(username=username, password=password)
+        if is_social:
+            if email and password:
+                user_exists = User.objects.filter(email=email).exists()
+                if user_exists:
+                    user = User.objects.get(email=email)
+                    username = user.username
+                    user_auth = authenticate(username=username, password=password)
+                else:
+                    msg = "Unable to log in with provided credentials."
+                    raise exceptions.ValidationError(msg)
             else:
-                msg = "Unable to log in with provided credentials."
-                raise exceptions.ValidationError(msg)
+                username = generate_username(email)
+                user = User.objects.create(username=username,email=email,password=password)
+                user.save()
+                profile = UserProfile.objects.create(fk_user=user,fullname="User test", social_token=password)
+                profile.save()
+                user_auth = authenticate(username=username, password=password)
         else:
-            msg = "Must include email or username and password"
-            raise exceptions.ValidationError(msg)
+            if email and password:
 
-        attrs['user'] = user
+                user_exists = User.objects.filter(email=email).exists()
+                if user_exists:
+                    user = User.objects.get(email=email)
+                    username = user.username
+                    user_auth = authenticate(username=username, password=password)
+                else:
+                    msg = "Unable to log in with provided credentials."
+                    raise exceptions.ValidationError(msg)
+            else:
+                msg = "Must include email or username and password"
+                raise exceptions.ValidationError(msg)
+
+        attrs['user'] = user_auth
         return attrs
+
+def generate_username(email):
+    print("USER ID")
+    # Get the list of user
+    user_id_list = User.objects.all().order_by('-id')
+
+    if user_id_list.count() > 0:
+        highest_user_id = user_id_list[0].id
+    else:
+        highest_user_id = 0
+
+    leading_part_of_email = email.split('@', 1)[0]
+    leading_part_of_email = re.sub(r'[^a-zA-Z0-9+]', '', leading_part_of_email)
+
+    truncated_part_of_email = leading_part_of_email[:3] + leading_part_of_email[-3:]
+    derived_username = truncated_part_of_email + str(highest_user_id + 1)
+
+    return derived_username
 
 # Serializer for the reset password
 class ResetPasswordSerializer(serializers.Serializer):

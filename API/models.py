@@ -15,6 +15,7 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=120, blank=True)
     game_points = models.IntegerField(blank=True,default=0)
     badge = models.CharField(max_length=100, blank=True, default="Apprentice")
+    social_token = models.CharField(max_length=100, blank=True,null=True)
 
     def __str__(self):
         return self.fullname

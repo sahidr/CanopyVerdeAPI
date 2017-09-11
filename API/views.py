@@ -1,4 +1,5 @@
 from django.core.mail import EmailMessage
+from django.views.generic import TemplateView
 from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
@@ -223,3 +224,6 @@ class Password_Reset_Confirm(generics.CreateAPIView):
         else:
             content = {'status': 400}
         return Response(content)
+
+class HomeView(TemplateView):
+    template_name = 'index.html'
