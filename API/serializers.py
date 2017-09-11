@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers, exceptions
@@ -331,30 +332,44 @@ class AuthCustomTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField() #password or token
     is_social = serializers.BooleanField()
+    fullname = serializers.CharField()
+    photo = serializers.CharField()
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
         is_social = attrs.get('is_social')
+        fullname = attrs.get('fullname')
+        photo = attrs.get('photo')
 
+        print("estoy aqui"+str(is_social))
         if is_social:
+            print("es social")
             if email and password:
+                print("si hay email y pass")
                 user_exists = User.objects.filter(email=email).exists()
                 if user_exists:
+                    print("existe user")
                     user = User.objects.get(email=email)
                     username = user.username
+                    print("username"+username)
                     user_auth = authenticate(username=username, password=password)
                 else:
-                    msg = "Unable to log in with provided credentials."
-                    raise exceptions.ValidationError(msg)
+                    username = generate_username(email)
+                    user = User.objects.create(username=username, email=email)
+                    user.set_password(password)
+                    user.save()
+
+                    print(str(fullname))
+
+                    profile = UserProfile.objects.create(fk_user=user, fullname=str(fullname), social_token=password)
+                    profile.save()
+                    user_auth = authenticate(username=username, password=password)
             else:
-                username = generate_username(email)
-                user = User.objects.create(username=username,email=email,password=password)
-                user.save()
-                profile = UserProfile.objects.create(fk_user=user,fullname="User test", social_token=password)
-                profile.save()
-                user_auth = authenticate(username=username, password=password)
+                msg = "Unable to log in with provided credentials."
+                raise exceptions.ValidationError(msg)
         else:
+
             if email and password:
 
                 user_exists = User.objects.filter(email=email).exists()
@@ -363,6 +378,7 @@ class AuthCustomTokenSerializer(serializers.Serializer):
                     username = user.username
                     user_auth = authenticate(username=username, password=password)
                 else:
+
                     msg = "Unable to log in with provided credentials."
                     raise exceptions.ValidationError(msg)
             else:
@@ -383,7 +399,7 @@ def generate_username(email):
         highest_user_id = 0
 
     leading_part_of_email = email.split('@', 1)[0]
-    leading_part_of_email = re.sub(r'[^a-zA-Z0-9+]', '', leading_part_of_email)
+    #leading_part_of_email = re.sub(r'[^a-zA-Z0-9+]', '', leading_part_of_email)
 
     truncated_part_of_email = leading_part_of_email[:3] + leading_part_of_email[-3:]
     derived_username = truncated_part_of_email + str(highest_user_id + 1)
