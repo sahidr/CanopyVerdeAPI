@@ -130,10 +130,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "CanopyVerde/static"),
-)
+STATIC_ROOT = os.path.join(BASE_DIR, "CanopyVerde/static")
+STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 MEDIA_URL = '/static/media/'
 MEDIA_ROOT = (
@@ -146,12 +144,3 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'canopyverde.analiticom@gmail.com'
 EMAIL_HOST_PASSWORD = 'analiticom123'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-try:
-    from .local_settings import *
-except ImportError:
-    pass

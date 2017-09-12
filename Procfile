@@ -1,1 +1,1 @@
-web: gunicorn canopyVerde:app
+web: gunicorn CanopyVerde.wsgi --log-file -
