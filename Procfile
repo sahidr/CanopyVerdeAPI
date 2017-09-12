@@ -1,1 +1,1 @@
-web: gunicorn canopy-verde:app
+web: gunicorn canopyVerde:app
