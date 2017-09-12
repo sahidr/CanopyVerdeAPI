@@ -1,1 +1,1 @@
-web: gunicorn canopyVerde.wsgi
+web: gunicorn canopy-verde:app
