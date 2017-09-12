@@ -146,3 +146,8 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'canopyverde.analiticom@gmail.com'
 EMAIL_HOST_PASSWORD = 'analiticom123'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+try:
+    from .local_settings import *
+except ImportError:
+    pass

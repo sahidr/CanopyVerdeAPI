@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
 from .views import CreateViewTreePoint, DetailsViewTreePoint, CreateViewBadge, DetailsViewBadge, CreateViewStats, \

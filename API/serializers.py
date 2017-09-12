@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+import requests
+from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers, exceptions
@@ -10,7 +12,7 @@ from .models import TreePoint, UserProfile, Stats, Badge, User, GameReport
 import base64
 import six
 import uuid
-
+import re
 #
 # Class that process an Encode64 Image, this allows the ImageField to receive data instead a FILE
 #
@@ -126,7 +128,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('fk_user')
         email = user_data['email']
         if (User.objects.filter(email=email).exists()):
-            content = {'error':400}
+            content = {'error':430}
+            #msg = "Unable to log in with provided credentials."
+            #raise exceptions.ValidationError(msg)
             raise exceptions.ValidationError(content)
         else:
             fk_user = User(username=user_data['username'],email=email)
@@ -332,37 +336,38 @@ class AuthCustomTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField() #password or token
     is_social = serializers.BooleanField()
-    fullname = serializers.CharField()
-    photo = serializers.CharField()
+    social = serializers.JSONField()
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
         is_social = attrs.get('is_social')
-        fullname = attrs.get('fullname')
-        photo = attrs.get('photo')
+        social = attrs.get('social')
 
-        print("estoy aqui"+str(is_social))
         if is_social:
-            print("es social")
             if email and password:
-                print("si hay email y pass")
                 user_exists = User.objects.filter(email=email).exists()
                 if user_exists:
-                    print("existe user")
                     user = User.objects.get(email=email)
                     username = user.username
-                    print("username"+username)
-                    user_auth = authenticate(username=username, password=password)
+                    profile = UserProfile.objects.get(fk_user=user)
+                    if (profile.social_token == None):
+                        user_auth = user
+                    else:
+                        user_auth = authenticate(username=username, password=password)
                 else:
                     username = generate_username(email)
                     user = User.objects.create(username=username, email=email)
                     user.set_password(password)
                     user.save()
-
-                    print(str(fullname))
-
-                    profile = UserProfile.objects.create(fk_user=user, fullname=str(fullname), social_token=password)
+                    fullname = social.get('fullname')
+                    url_photo = social.get('photo')
+                    request_photo = requests.get(url_photo)
+                    img_temp = NamedTemporaryFile(delete=True)
+                    img_temp.write(request_photo.content)
+                    img_temp.flush()
+                    profile = UserProfile.objects.create(fk_user=user, fullname=str(fullname),social_token=password)
+                    profile.profile_pic.save("photo"+img_temp.name, File(img_temp), save=True)
                     profile.save()
                     user_auth = authenticate(username=username, password=password)
             else:
@@ -389,10 +394,8 @@ class AuthCustomTokenSerializer(serializers.Serializer):
         return attrs
 
 def generate_username(email):
-    print("USER ID")
     # Get the list of user
     user_id_list = User.objects.all().order_by('-id')
-
     if user_id_list.count() > 0:
         highest_user_id = user_id_list[0].id
     else:

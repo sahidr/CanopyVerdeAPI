@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.core.mail import EmailMessage
 from django.views.generic import TemplateView
 from rest_framework.authtoken.models import Token

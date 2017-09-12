@@ -1,0 +1,1 @@
+web: gunicorn canopyVerde.wsgi
