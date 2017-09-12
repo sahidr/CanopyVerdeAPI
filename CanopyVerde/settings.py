@@ -147,6 +147,9 @@ EMAIL_HOST_USER = 'canopyverde.analiticom@gmail.com'
 EMAIL_HOST_PASSWORD = 'analiticom123'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
+
 try:
     from .local_settings import *
 except ImportError:
