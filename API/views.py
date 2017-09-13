@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.core.mail import EmailMessage
-from django.views.generic import TemplateView
-from rest_framework.authtoken.models import Token
 from rest_framework import generics, renderers, filters
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
-from .serializers import TreePointSerializer, UserProfileSerializer, BadgeSerializer, StatsSerializer, UserSerializer, \
-    AuthCustomTokenSerializer, GameReportSerializer, ReportSerializer, CityStatsSerializer, \
-    ResetPasswordSerializer, ChangePasswordSerializer
+from .serializers import *
 from .models import TreePoint, UserProfile, Stats, Badge, User, GameReport
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -225,6 +221,3 @@ class Password_Reset_Confirm(generics.CreateAPIView):
         else:
             content = {'status': 400}
         return Response(content)
-
-class HomeView(TemplateView):
-    template_name = 'index.html'

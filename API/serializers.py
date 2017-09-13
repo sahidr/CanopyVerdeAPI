@@ -402,7 +402,7 @@ def generate_username(email):
         highest_user_id = 0
 
     leading_part_of_email = email.split('@', 1)[0]
-    #leading_part_of_email = re.sub(r'[^a-zA-Z0-9+]', '', leading_part_of_email)
+    leading_part_of_email = re.sub(r'[^a-zA-Z0-9+]', '', leading_part_of_email)
 
     truncated_part_of_email = leading_part_of_email[:3] + leading_part_of_email[-3:]
     derived_username = truncated_part_of_email + str(highest_user_id + 1)
