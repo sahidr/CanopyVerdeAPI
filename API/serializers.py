@@ -221,6 +221,9 @@ class TreePointSerializer(serializers.ModelSerializer):
                 stats = Stats.objects.get(city=city)
                 stats.reported_trees += 1
                 stats.save()
+            else:
+                new_city = Stats(city=city,reported_trees=1)
+                new_city.save()
         return green_point
 
     # Method for a custom update of the TreePoint table
